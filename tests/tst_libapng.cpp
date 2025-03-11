@@ -63,6 +63,8 @@ void TestLibApng::crcOutput_data()
   QTest::newRow("IHDR") << "4948445200000258000002580806000000" << 0xBE6698DCU;
   QTest::newRow("ACTL") << "6163544C0000007800000000" << 0x40EF6B1EU;
   QTest::newRow("FCTL") << "6663544C0000000000000258000002580000000000000000002103E80000" << 0x16E15EB9U;
+  QString qsText = QString("tEXtCreation time%1Tue, 11 03 2025 14:36:48").arg(QByteArray::fromHex("00")).toLatin1().toHex();
+  QTest::newRow("tEXt") << qsText << 0x8F5835ADU;
 }
 
 void TestLibApng::crcOutput()
@@ -120,6 +122,9 @@ void TestLibApng::writerBinaryTest()
   auto baFile = fFile.readAll();
   fFile.close();
 
+  // these tests might occasionally fail, because the APNG files also store Creation time, which
+  // can be different for two different files, created one after another. But this is a rare occasion
+  // and should not be a reason for concern unless these tests start failing regularly.
   QCOMPARE(baImg.size(), baPix.size());
   QCOMPARE(baImg.size(), baFile.size());
   QCOMPARE(baImg, baPix);
@@ -133,8 +138,8 @@ void TestLibApng::readerWriterTest()
 
   QVector<QImage> vImg1;
   for (int i = 0; i < 10; ++i) {
-      vImg1 << prepareImage(i);
-      writer.append(&vImg1.last());
+    vImg1 << prepareImage(i);
+    writer.append(&vImg1.last());
   }
 
   QTemporaryFile tf;

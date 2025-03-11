@@ -75,6 +75,11 @@ private:
    */
   void writeIHDR(QFile& rF) const;
   /**
+   * @brief writeText Writes the textual data
+   * @param rF
+   */
+  void writeText(QFile& rF) const;
+  /**
    * @brief writeACTL Writes the ACTL chunk
    * @param rF Reference to file to write into
    */
@@ -102,6 +107,13 @@ private:
    * @param rF Reference to file to write into
    */
   void writeIEnd(QFile& rF) const;
+  /**
+   * @brief prepareText Prepares the text for storing into tEXt chunk
+   * @param rqsKey Text key
+   * @param rqsValue Text value
+   * @return
+   */
+  QByteArray prepareText(const QString& rqsKey, const QString& rqsValue) const;
 
 private:
   QVector<Chunk> m_vIDAT;

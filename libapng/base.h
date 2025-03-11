@@ -101,6 +101,7 @@ protected:
     const QByteArray m_cbaSig  = QByteArray::fromHex("89504E470D0A1A0A");
     const QByteArray m_cbaIDAT = QByteArray::fromHex("49444154");
     const QByteArray m_cbaIHDR = QByteArray::fromHex("49484452");
+    const QByteArray m_cbaTEXT = QByteArray::fromHex("74455874");
     const QByteArray m_cbaACTL = QByteArray::fromHex("6163544C");
     const QByteArray m_cbaFCTL = QByteArray::fromHex("6663544C");
     const QByteArray m_cbaFDAT = QByteArray::fromHex("66644154");

@@ -1,6 +1,7 @@
 #include "writer.h"
 
 #include <QBuffer>
+#include <QDateTime>
 #include <QFile>
 #include <QImage>
 #include <QPixmap>
@@ -94,6 +95,7 @@ bool Writer::exportAPNG(const QString& rqsFile, int iFPS)
   for (const auto& rOther : m_vOtherChunks)
       writeChunk(f, rOther);
 
+  writeText(f);
   writeACTL(f);
   writeFCTL(f, -1, iFPS);
   writeIDAT(f);
@@ -132,6 +134,24 @@ void Writer::writeIHDR(QFile& rF) const
   writeChunk(rF, m_chunkIHDR);
 }
 
+void Writer::writeText(QFile& rF) const
+{
+  Chunk chunk;
+
+  chunk.m_baContent = prepareText("Creation time", QDateTime::currentDateTime().toString("ddd, dd MM yyyy HH:mm:ss"));
+  chunk.m_baName = m_cbaTEXT;
+  chunk.m_uiLength = chunk.m_baContent.size();
+  chunk.m_baCRC = convert(crc(chunk));
+  writeChunk(rF, chunk);
+  qDebug() << chunk.m_baName << chunk.m_baContent << chunk.m_uiLength << chunk.m_baCRC.toHex();
+
+  chunk.m_baContent = prepareText("Software", "libapng v1.0");
+  chunk.m_baName = m_cbaTEXT;
+  chunk.m_uiLength = chunk.m_baContent.size();
+  chunk.m_baCRC = convert(crc(chunk));
+  writeChunk(rF, chunk);
+}
+
 void Writer::writeACTL(QFile& rF) const
 {
   writeChunk(rF, actl(1 + m_vfDAT.count(), 0));
@@ -161,6 +181,15 @@ void Writer::writeIEnd(QFile& rF) const
 {
   writeChunk(rF, iend());
   rF.close();
+}
+
+QByteArray Writer::prepareText(const QString& rqsKey, const QString& rqsValue) const
+{
+  auto ba = rqsKey.toLatin1();
+  QByteArray baZero = QByteArray::fromHex("00");
+  ba.append(baZero);
+  ba.append(rqsValue.toLatin1());
+  return ba;
 }
 
 }

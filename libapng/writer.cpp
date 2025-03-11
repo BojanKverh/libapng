@@ -31,7 +31,7 @@ void Writer::append(const QByteArray& rba)
         m_vIDAT << chunk;
       } else {
         if (chunkFrame.has_value() == false) {
-          chunkFrame = chunk;
+          chunkFrame           = chunk;
           chunkFrame->m_baName = m_cbaFDAT;
         } else {
           chunkFrame->m_baContent.append(chunk.m_baContent);
@@ -93,7 +93,7 @@ bool Writer::exportAPNG(const QString& rqsFile, int iFPS)
 
   writeIHDR(f);
   for (const auto& rOther : m_vOtherChunks)
-      writeChunk(f, rOther);
+    writeChunk(f, rOther);
 
   writeText(f);
   writeACTL(f);
@@ -117,7 +117,7 @@ void Writer::reset()
 
 int Writer::count() const
 {
-  return (m_vIDAT.count() > 0? 1 : 0) + m_vfDAT.count();
+  return (m_vIDAT.count() > 0 ? 1 : 0) + m_vfDAT.count();
 }
 
 bool Writer::writeSignature(QFile& rF) const
@@ -138,17 +138,17 @@ void Writer::writeText(QFile& rF) const
 {
   Chunk chunk;
 
-  chunk.m_baContent = prepareText("Creation time", QDateTime::currentDateTime().toString("ddd, dd MM yyyy HH:mm:ss"));
-  chunk.m_baName = m_cbaTEXT;
+  chunk.m_baContent =
+    prepareText("Creation time", QDateTime::currentDateTime().toString("ddd, dd MM yyyy HH:mm:ss"));
+  chunk.m_baName   = m_cbaTEXT;
   chunk.m_uiLength = chunk.m_baContent.size();
-  chunk.m_baCRC = convert(crc(chunk));
+  chunk.m_baCRC    = convert(crc(chunk));
   writeChunk(rF, chunk);
-  qDebug() << chunk.m_baName << chunk.m_baContent << chunk.m_uiLength << chunk.m_baCRC.toHex();
 
   chunk.m_baContent = prepareText("Software", "libapng v1.0");
-  chunk.m_baName = m_cbaTEXT;
-  chunk.m_uiLength = chunk.m_baContent.size();
-  chunk.m_baCRC = convert(crc(chunk));
+  chunk.m_baName    = m_cbaTEXT;
+  chunk.m_uiLength  = chunk.m_baContent.size();
+  chunk.m_baCRC     = convert(crc(chunk));
   writeChunk(rF, chunk);
 }
 
@@ -185,11 +185,11 @@ void Writer::writeIEnd(QFile& rF) const
 
 QByteArray Writer::prepareText(const QString& rqsKey, const QString& rqsValue) const
 {
-  auto ba = rqsKey.toLatin1();
+  auto ba           = rqsKey.toLatin1();
   QByteArray baZero = QByteArray::fromHex("00");
   ba.append(baZero);
   ba.append(rqsValue.toLatin1());
   return ba;
 }
 
-}
+} // namespace png

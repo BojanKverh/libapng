@@ -19,26 +19,27 @@ QVector<QByteArray> Reader::import(const QString& rqsFile)
 
     auto baContent = m_cbaSig;
     writeChunk(baContent, m_chunkIHDR);
-    for (const auto& rOther : m_vOtherChunks)
-        writeChunk(baContent, rOther);
+    for (const auto& rOther : m_vOtherChunks) {
+      writeChunk(baContent, rOther);
+    }
     for (const auto& rba : vIDAT) {
-        baContent.append(rba);
+      baContent.append(rba);
     }
 
     writeChunk(baContent, iend());
     vImg << baContent;
 
     for (const auto& rFDAT : m_vfDAT) {
-        baContent = m_cbaSig;
-        writeChunk(baContent, m_chunkIHDR);
-        for (const auto& rOther : m_vOtherChunks)
-            writeChunk(baContent, rOther);
-        auto vIDAT = split(rFDAT.m_baContent.mid(4));
-        for (const auto& rba : vIDAT) {
-            baContent.append(rba);
-        }
-        writeChunk(baContent, iend());
-        vImg << baContent;
+      baContent = m_cbaSig;
+      writeChunk(baContent, m_chunkIHDR);
+      for (const auto& rOther : m_vOtherChunks)
+        writeChunk(baContent, rOther);
+      auto vIDAT = split(rFDAT.m_baContent.mid(4));
+      for (const auto& rba : vIDAT) {
+        baContent.append(rba);
+      }
+      writeChunk(baContent, iend());
+      vImg << baContent;
     }
   }
 
@@ -106,13 +107,13 @@ QByteArray Reader::readContent(const QString& rqsFile) const
   QByteArray ba;
   QFile f(rqsFile);
   if (f.open(QFile::ReadOnly) == true) {
-      ba = f.readAll();
-      f.close();
+    ba = f.readAll();
+    f.close();
   }
 
   // if the signature is not found, clear the content, which signals an error
   if (ba.left(8) != m_cbaSig)
-      ba.clear();
+    ba.clear();
 
   return ba;
 }
@@ -129,13 +130,12 @@ void Reader::parseChunks(const QByteArray& rba)
       m_baIDAT.append(chunk.m_baContent);
     else if (chunk.m_baName == m_cbaFDAT)
       m_vfDAT << chunk;
-    else if ((chunk.m_baName != m_cbaACTL) && (chunk.m_baName != m_cbaFCTL) &&
-             (chunk.m_baName != m_cbaIEND))
+    else if ((chunk.m_baName != m_cbaACTL) && (chunk.m_baName != m_cbaFCTL)
+             && (chunk.m_baName != m_cbaIEND))
       m_vOtherChunks << chunk;
 
     optChunk = readChunk(rba, uiOffset);
   }
-
 }
 
 void Reader::parseIHDR(const QByteArray& rba, quint32& riOffset)
@@ -167,7 +167,7 @@ QPair<QByteArray, int> Reader::parseFDAT(const QByteArray& rba, int iOffset) con
   auto ind = rba.indexOf(m_cbaFDAT, iOffset);
   if (ind >= 0) {
     auto uiLength = convert(rba.mid(ind - 4, 4));
-    result.first = rba.mid(ind + 8, uiLength - 4);
+    result.first  = rba.mid(ind + 8, uiLength - 4);
     result.second = ind + uiLength + 4;
   }
   return result;
@@ -188,5 +188,4 @@ QVector<QByteArray> Reader::split(const QByteArray& rba) const
   return vIDAT;
 }
 
-}
-
+} // namespace png

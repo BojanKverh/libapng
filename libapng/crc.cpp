@@ -27,4 +27,4 @@ quint32 CRC::calculate(const QByteArray& rba) const
   return crc ^ 0xFFFFFFFF;
 }
 
-}
+} // namespace png

@@ -1,35 +1,33 @@
-#include <QtTest>
 #include <QImage>
 #include <QPainter>
 #include <QTemporaryFile>
+#include <QtTest>
 
 // add necessary includes here
 #include "../libapng/crc.h"
-#include "../libapng/writer.h"
 #include "../libapng/reader.h"
+#include "../libapng/writer.h"
 
 class TestLibApng : public QObject
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    TestLibApng();
-    ~TestLibApng();
+  TestLibApng();
+  ~TestLibApng();
 
 private:
-    QImage prepareImage(int i) const;
+  QImage prepareImage(int i) const;
 
 private slots:
-    void initTestCase();
-    void cleanupTestCase();
+  void initTestCase();
+  void cleanupTestCase();
 
-    void crcOutput_data();
-    void crcOutput();
+  void crcOutput_data();
+  void crcOutput();
 
-    void writerBinaryTest();
-    void readerWriterTest();
-
-
+  void writerBinaryTest();
+  void readerWriterTest();
 };
 
 TestLibApng::TestLibApng() {}
@@ -38,16 +36,15 @@ TestLibApng::~TestLibApng() {}
 
 QImage TestLibApng::prepareImage(int i) const
 {
-    QImage img(100, 100, QImage::Format_ARGB32);
-    img.fill(Qt::transparent);
-    QPainter P(&img);
-    P.setPen(Qt::red);
-    P.setBrush(Qt::red);
-    P.drawRoundedRect(i*10, i*10, 10, 10, 3, 3);
+  QImage img(100, 100, QImage::Format_ARGB32);
+  img.fill(Qt::transparent);
+  QPainter P(&img);
+  P.setPen(Qt::red);
+  P.setBrush(Qt::red);
+  P.drawRoundedRect(i * 10, i * 10, 10, 10, 3, 3);
 
-    return img;
+  return img;
 }
-
 
 void TestLibApng::initTestCase() {}
 
@@ -62,19 +59,23 @@ void TestLibApng::crcOutput_data()
   QTest::newRow("IEND") << "49454E44" << 0xAE426082U;
   QTest::newRow("IHDR") << "4948445200000258000002580806000000" << 0xBE6698DCU;
   QTest::newRow("ACTL") << "6163544C0000007800000000" << 0x40EF6B1EU;
-  QTest::newRow("FCTL") << "6663544C0000000000000258000002580000000000000000002103E80000" << 0x16E15EB9U;
-  QString qsText = QString("tEXtCreation time%1Tue, 11 03 2025 14:36:48").arg(QByteArray::fromHex("00")).toLatin1().toHex();
+  QTest::newRow("FCTL") << "6663544C0000000000000258000002580000000000000000002103E80000"
+                        << 0x16E15EB9U;
+  QString qsText = QString("tEXtCreation time%1Tue, 11 03 2025 14:36:48")
+                     .arg(QByteArray::fromHex("00"))
+                     .toLatin1()
+                     .toHex();
   QTest::newRow("tEXt") << qsText << 0x8F5835ADU;
 }
 
 void TestLibApng::crcOutput()
 {
-    png::CRC crc;
-    QFETCH(QString, data);
-    QFETCH(quint32, value);
+  png::CRC crc;
+  QFETCH(QString, data);
+  QFETCH(quint32, value);
 
-    auto bytes = QByteArray::fromHex(data.toLatin1());
-    QCOMPARE(crc.calculate(bytes), value);
+  auto bytes = QByteArray::fromHex(data.toLatin1());
+  QCOMPARE(crc.calculate(bytes), value);
 }
 
 void TestLibApng::writerBinaryTest()
@@ -123,8 +124,8 @@ void TestLibApng::writerBinaryTest()
   fFile.close();
 
   // these tests might occasionally fail, because the APNG files also store Creation time, which
-  // can be different for two different files, created one after another. But this is a rare occasion
-  // and should not be a reason for concern unless these tests start failing regularly.
+  // can be different for two different files, created one after another. But this is a rare
+  // occasion and should not be a reason for concern unless these tests start failing regularly.
   QCOMPARE(baImg.size(), baPix.size());
   QCOMPARE(baImg.size(), baFile.size());
   QCOMPARE(baImg, baPix);
@@ -156,7 +157,6 @@ void TestLibApng::readerWriterTest()
     qsErrMsg = "Written and read images do not have the same content (index %1)";
     QVERIFY2(vImg1[i] == vImg2[i], qsErrMsg.arg(i).toLatin1());
   }
-
 }
 
 QTEST_MAIN(TestLibApng)

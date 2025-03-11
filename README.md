@@ -7,3 +7,5 @@ Its main two classes are:
 
 Class png::Writer allows users add individual frames in form of QImage, QPixmap, file name or raw data (QByteArray) and then store the animation in a file.
 Class png::Reader allows users to parse an APNG file and split it into individual frames in form of files, QImages or QPixmaps. 
+
+This library needs Qt library, more specifically QtGui to compile, because it uses classes like QImage and QPixmap. 

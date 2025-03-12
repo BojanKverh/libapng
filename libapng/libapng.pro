@@ -17,6 +17,7 @@ SOURCES += \
     writer.cpp
 
 HEADERS += \
+    info.h \
     libapng_global.h \
     libapng.h \
     base.h \

@@ -55,7 +55,7 @@ public:
    * @brief reset This method removes all the stored images from the object's container, making it
    * possible to reuse objects of this class to create more than one animated PNG
    */
-  void reset();
+  void reset() override;
   /**
    * @brief count Returns the number of frames stored in the object's container
    * @return number of frames stored in the object's container

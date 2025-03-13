@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QtGlobal>
+#include <QString>
+#include <QDebug>
 
 namespace png {
 
@@ -19,7 +21,7 @@ public:
    */
   enum class ParseError {
     epeNone,
-    epeSignature,
+    epeNoSignature,
     epeNoIHDR,
     epeNoIDAT,
     epeNoIEND,
@@ -32,6 +34,11 @@ public:
    * @brief Info Default constructor
    */
   Info();
+  /**
+   * @brief isOk Returns true, if this object contains no parse error code
+   * @return true, if this object contains no parse error and false otherwise
+   */
+  bool isOk() const { return m_epeError == ParseError::epeNone; }
   /**
    * @brief type Returns the PNG file type
    * @return PNG file type
@@ -84,19 +91,22 @@ public:
    * @param rqsMsg Error message
    * @param uiOffset Offset, where the error occured
    */
-  void setError(ParseError epeError, const QString& rqsMsg, quint32 uiOffset)
-  {
-    m_epeError   = epeError;
-    m_qsErrorMsg = rqsMsg;
-    m_uiOffset   = uiOffset;
-  }
+  void setError(ParseError epeError, const QString& rqsMsg, quint32 uiOffset);
+  /**
+   * @brief reset Resets the object attributes to their default values
+   */
+  void reset();
 
 private:
-  Type m_eType          = Type::etInvalid;
-  quint32 m_uiFPS       = 0U;
-  quint32 m_uiFrames    = 0U;
-  ParseError m_epeError = ParseError::epeNone;
+  Type m_eType;
+  quint32 m_uiFPS;
+  quint32 m_uiFrames;
+  ParseError m_epeError;
   QString m_qsErrorMsg;
-  quint32 m_uiOffset = 0U;
+  quint32 m_uiOffset;
 };
+
+__declspec(dllexport) QDebug operator<<(QDebug dbg, const Info &info);
+
+
 } // namespace png

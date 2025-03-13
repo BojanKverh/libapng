@@ -13,3 +13,6 @@ else:unix: LIBS += -L$$OUT_PWD/../libapng/ -llibapng
 
 INCLUDEPATH += $$PWD/../libapng
 DEPENDPATH += $$PWD/../libapng
+
+RESOURCES += \
+  data.qrc

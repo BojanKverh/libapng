@@ -15,9 +15,9 @@ void Writer::append(const QByteArray& rba)
 {
   bool bFirst = (m_vIDAT.count() == 0);
 
-  quint32 iOffset = m_cbaSig.size();
+  quint32 uiOffset = m_cbaSig.size();
 
-  auto optChunk = readChunk(rba, iOffset);
+  auto optChunk = readChunk(rba, uiOffset);
   std::optional<Chunk> chunkFrame;
 
   while (optChunk.has_value() == true) {
@@ -42,7 +42,7 @@ void Writer::append(const QByteArray& rba)
       m_vOtherChunks << chunk;
     }
 
-    optChunk = readChunk(rba, iOffset);
+    optChunk = readChunk(rba, uiOffset);
   }
 
   if (chunkFrame.has_value() == true) {
@@ -111,6 +111,7 @@ bool Writer::exportAPNG(const QString& rqsFile, int iFPS)
 
 void Writer::reset()
 {
+  Base::reset();
   m_vIDAT.clear();
   m_vfDAT.clear();
 }
@@ -139,7 +140,7 @@ void Writer::writeText(QFile& rF) const
   Chunk chunk;
 
   chunk.m_baContent =
-    prepareText("Creation time", QDateTime::currentDateTime().toString("ddd, dd MM yyyy HH:mm:ss"));
+  prepareText("Creation time", QDateTime::currentDateTime().toString("ddd, dd MM yyyy HH:mm:ss"));
   chunk.m_baName   = m_cbaTEXT;
   chunk.m_uiLength = chunk.m_baContent.size();
   chunk.m_baCRC    = convert(crc(chunk));

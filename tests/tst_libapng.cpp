@@ -28,6 +28,9 @@ private slots:
 
   void writerBinaryTest();
   void readerWriterTest();
+
+  void errorChecking_data();
+  void errorChecking();
 };
 
 TestLibApng::TestLibApng() {}
@@ -70,7 +73,8 @@ void TestLibApng::crcOutput_data()
 
 void TestLibApng::crcOutput()
 {
-  png::CRC crc;
+  using namespace png;
+  CRC crc;
   QFETCH(QString, data);
   QFETCH(quint32, value);
 
@@ -80,9 +84,10 @@ void TestLibApng::crcOutput()
 
 void TestLibApng::writerBinaryTest()
 {
-  png::Writer writerImg;
-  png::Writer writerPix;
-  png::Writer writerFile;
+  using namespace png;
+  Writer writerImg;
+  Writer writerPix;
+  Writer writerFile;
 
   for (int i = 0; i < 10; ++i) {
     auto img = prepareImage(i);
@@ -134,8 +139,9 @@ void TestLibApng::writerBinaryTest()
 
 void TestLibApng::readerWriterTest()
 {
-  png::Writer writer;
-  png::Reader reader;
+  using namespace png;
+  Writer writer;
+  Reader reader;
 
   QVector<QImage> vImg1;
   for (int i = 0; i < 10; ++i) {
@@ -150,6 +156,7 @@ void TestLibApng::readerWriterTest()
 
   auto vImg2 = reader.importImages(tf.fileName());
 
+  qDebug() << reader.info();
   QCOMPARE(vImg1.count(), vImg2.count());
   for (int i = 0; i < qMin(vImg1.count(), vImg2.count()); ++i) {
     QString qsErrMsg = "Written and read images sizes are not the same (index %1)";
@@ -157,6 +164,38 @@ void TestLibApng::readerWriterTest()
     qsErrMsg = "Written and read images do not have the same content (index %1)";
     QVERIFY2(vImg1[i] == vImg2[i], qsErrMsg.arg(i).toLatin1());
   }
+}
+
+void TestLibApng::errorChecking_data()
+{
+  using namespace png;
+
+  QTest::addColumn<QString>("file");
+  QTest::addColumn<Info::Type>("type");
+  QTest::addColumn<quint32>("fps");
+  QTest::addColumn<quint32>("frames");
+  QTest::addColumn<Info::ParseError>("error");
+
+  QTest::addRow("Valid PNG file") << ":/data/sample.png" << Info::Type::etPNG
+                                  << 0U << 1U << Info::ParseError::epeNone;
+}
+
+void TestLibApng::errorChecking()
+{
+  using namespace png;
+  Reader reader;
+
+  QFETCH(QString, file);
+  QFETCH(Info::Type, type);
+  QFETCH(quint32, fps);
+  QFETCH(quint32, frames);
+  QFETCH(Info::ParseError, error);
+
+  reader.import(file);
+  QCOMPARE(reader.info().type(), type);
+  QCOMPARE(reader.info().fps(), fps);
+  QCOMPARE(reader.info().framesCount(), frames);
+  QCOMPARE(reader.info().error(), error);
 }
 
 QTEST_MAIN(TestLibApng)

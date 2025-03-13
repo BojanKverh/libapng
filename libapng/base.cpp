@@ -16,11 +16,18 @@ QByteArray Base::convert(quint32 uiValue) const
 
 quint32 Base::convert(const QByteArray& rba) const
 {
-  quint32 uiVal;
-  uiVal = ((unsigned char) rba[0]) << 24;
-  uiVal += ((unsigned char) rba[1]) << 16;
-  uiVal += (((unsigned char) rba[2]) << 8);
-  uiVal += (unsigned char) rba[3];
+  quint32 uiVal = 0;
+  if (rba.size() > 0) {
+    uiVal = ((unsigned char) rba[0]);
+    if (rba.size() > 1) {
+      uiVal = (uiVal << 8) + (unsigned char) rba[1];
+      if (rba.size() > 2) {
+          uiVal = (uiVal << 8) + (unsigned char) rba[2];
+        if (rba.size() > 3)
+          uiVal = (uiVal << 8) + (unsigned char) rba[3];
+      }
+    }
+  }
   return uiVal;
 }
 
@@ -31,9 +38,12 @@ quint32 Base::crc(const Chunk& rChunk) const
   return m_crc.calculate(ba);
 }
 
-std::optional<Chunk> Base::readChunk(const QByteArray& rba, quint32& riOffset) const
+std::optional<Chunk> Base::readChunk(const QByteArray& rba, quint32& riOffset)
 {
-  if (riOffset + 12 >= rba.size()) {
+  if (riOffset + 12 > rba.size()) {
+    if (riOffset > rba.size())
+      m_info.setError(Info::ParseError::epeInvalidSize, QString("Invalid chunk size at %1").arg(riOffset), riOffset);
+
     return {};
   }
 
@@ -43,7 +53,19 @@ std::optional<Chunk> Base::readChunk(const QByteArray& rba, quint32& riOffset) c
   chunk.m_baContent = rba.mid(riOffset + 8, chunk.m_uiLength);
   chunk.m_baCRC = rba.mid(riOffset + 8 + chunk.m_uiLength, 4);
 
+  auto eVal = validity(chunk.m_baName);
+  if (eVal == ChunkName::ecnInvalid) {
+    m_info.setError(Info::ParseError::epeChunkName, QString("Invalid chunk name \"%1\" at %2").arg(chunk.m_baName).arg(riOffset), riOffset);
+    return {};
+  } else if (eVal == ChunkName::ecnAPNG) {
+    m_info.setType(Info::Type::etAPNG);
+  }
+
   riOffset += chunk.size();
+  if (convert(crc(chunk)) != chunk.m_baCRC) {
+    m_info.setError(Info::ParseError::epeCRC, QString("Invalid CRC value for chunk \"%1\" at %2").arg(chunk.m_baName).arg(riOffset), riOffset);
+    return {};
+  }
 
   return chunk;
 }
@@ -105,6 +127,18 @@ Chunk Base::iend() const
   chunk.m_uiLength = chunk.m_baContent.size();
   chunk.m_baCRC = convert(crc(chunk));
   return chunk;
+}
+
+void Base::reset() { m_info.reset(); }
+
+ChunkName Base::validity(const QByteArray& rba) const
+{
+  if (m_csetValidPngChunks.contains(rba) == true)
+    return ChunkName::ecnPNG;
+  else if (m_csetValidApngChunks.contains(rba) == true)
+    return ChunkName::ecnAPNG;
+  else
+      return ChunkName::ecnInvalid;
 }
 
 }

@@ -9,10 +9,14 @@ Reader::Reader() {}
 
 QVector<QByteArray> Reader::import(const QString& rqsFile)
 {
+  reset();
+  // default type is PNG
+  m_info.setType(Info::Type::etPNG);
+
   QVector<QByteArray> vImg;
 
   auto ba = readContent(rqsFile);
-  if (ba.size() > 0) {
+  if (ba.size() > 0 && m_info.error() == Info::ParseError::epeNone) {
     parseChunks(ba);
 
     auto vIDAT = split(m_baIDAT);
@@ -72,7 +76,7 @@ QVector<QImage> Reader::importImages(const QString& rqsFile)
     buf.open(QIODevice::ReadOnly);
     buf.seek(0);
     QImage img;
-    img.load(&buf, "png");
+    img.load(&buf, "PNG");
     buf.close();
     vImg << img;
   }
@@ -96,13 +100,14 @@ QVector<QPixmap> Reader::importPixmaps(const QString& rqsFile)
 
 void Reader::reset()
 {
+  Base::reset();
   m_chunkIHDR = Chunk();
   m_baIDAT.clear();
   m_vfDAT.clear();
   m_vOtherChunks.clear();
 }
 
-QByteArray Reader::readContent(const QString& rqsFile) const
+QByteArray Reader::readContent(const QString& rqsFile)
 {
   QByteArray ba;
   QFile f(rqsFile);
@@ -112,30 +117,56 @@ QByteArray Reader::readContent(const QString& rqsFile) const
   }
 
   // if the signature is not found, clear the content, which signals an error
-  if (ba.left(8) != m_cbaSig)
-    ba.clear();
+  if (ba.left(8) != m_cbaSig) {
+    m_info.setType(Info::Type::etInvalid);
+    m_info.setError(Info::ParseError::epeNoSignature, "No PNG signature found at the beginning of the file", 0U);
+  }
 
   return ba;
 }
 
 void Reader::parseChunks(const QByteArray& rba)
 {
+  bool bIEND = false;
   quint32 uiOffset = m_cbaSig.size();
   parseIHDR(rba, uiOffset);
+  if (m_info.isOk() == false)
+    return;
 
   auto optChunk = readChunk(rba, uiOffset);
-  while (optChunk.has_value() == true) {
+  while ((optChunk.has_value() == true) && (m_info.isOk() == true)) {
     auto chunk = optChunk.value();
     if (chunk.m_baName == m_cbaIDAT)
       m_baIDAT.append(chunk.m_baContent);
     else if (chunk.m_baName == m_cbaFDAT)
       m_vfDAT << chunk;
-    else if ((chunk.m_baName != m_cbaACTL) && (chunk.m_baName != m_cbaFCTL)
-             && (chunk.m_baName != m_cbaIEND))
+    else if (chunk.m_baName == m_cbaIEND)
+      bIEND = true;
+    else if ((chunk.m_baName != m_cbaACTL) && (chunk.m_baName != m_cbaFCTL))
       m_vOtherChunks << chunk;
+
+    if (chunk.m_baName == m_cbaFCTL) {
+        auto num = convert(chunk.m_baContent.mid(20, 2));
+        auto denom = convert(chunk.m_baContent.mid(22, 2));
+        m_info.setFPS(num > 0? denom / num : 0);
+    }
 
     optChunk = readChunk(rba, uiOffset);
   }
+
+  if (m_info.isOk() == false)
+    return;
+
+  if (m_baIDAT.size() == 0) {
+    m_info.setError(Info::ParseError::epeNoIDAT, "No IDAT chunk found", uiOffset);
+    return;
+  }
+
+  if (bIEND == false) {
+    m_info.setError(Info::ParseError::epeNoIEND, "No IEND chunk found ", uiOffset);
+  }
+
+  m_info.setFrameCount(1 + m_vfDAT.count());
 }
 
 void Reader::parseIHDR(const QByteArray& rba, quint32& riOffset)
@@ -143,20 +174,10 @@ void Reader::parseIHDR(const QByteArray& rba, quint32& riOffset)
   auto opt = readChunk(rba, riOffset);
   if (opt.has_value() == true)
     m_chunkIHDR = opt.value();
-}
 
-QByteArray Reader::parseIDAT(const QByteArray& rba) const
-{
-  QByteArray baIDAT;
-  auto ind = rba.indexOf(m_cbaIDAT);
-  while (ind >= 4) {
-    auto uiLength = convert(rba.mid(ind - 4, 4));
-    if (ind + uiLength + 8 <= rba.size()) {
-      baIDAT.append(rba.mid(ind + 4, uiLength));
-    }
-    ind = rba.indexOf(m_cbaIDAT, ind + uiLength + 8);
+  if (m_chunkIHDR.m_baName != m_cbaIHDR) {
+    m_info.setError(Info::ParseError::epeNoIHDR, "No IHDR chunk found", riOffset);
   }
-  return baIDAT;
 }
 
 QPair<QByteArray, int> Reader::parseFDAT(const QByteArray& rba, int iOffset) const

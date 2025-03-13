@@ -21,7 +21,8 @@ public:
      */
     Reader();
     /**
-     * @brief import Reads the APNG file and splits it into individual frames
+     * @brief import Reads the APNG file and splits it into individual frames. If an error occured during APNG parsing, this method will return an
+     * empty vector. In any case, the caller should call the info().isOk() method to determine, whether the file was parsed correctly or not.
      * @param rqsFile Full path to the file to read
      * @return Imported frames in a vector of binary content
      */
@@ -48,10 +49,11 @@ public:
      */
     QVector<QPixmap> importPixmaps(const QString& rqsFile);
     /**
-     * @brief reset Resets all the parsed data, making it possible to reuse Reader object to
-     * parse more than one APNG
+     * @brief reset Resets all the parsed data. This method is called automatically by all the import
+     * methods, so no need to call it explicitly, unless the resources taken by the individual frames
+     * need to be released.
      */
-    void reset();
+    void reset() override;
 
 private:
     /**
@@ -59,7 +61,7 @@ private:
      * @param rqsFile Full path to the file to read
      * @return Content of the file
      */
-    QByteArray readContent(const QString& rqsFile) const;
+    QByteArray readContent(const QString& rqsFile);
     /**
      * @brief parseChunks Parses PNG chunks
      * @param rba Reference to the byte array to parse
@@ -71,12 +73,6 @@ private:
      * @param riOffset reference to the offset variable
      */
     void parseIHDR(const QByteArray& rba, quint32& riOffset);
-    /**
-     * @brief parseIDAT Parses all IDAT chunks and returns them in a byte array
-     * @param rba Reference to the image content
-     * @return byate array of IDAT chunks
-     */
-    QByteArray parseIDAT(const QByteArray& rba) const;
     /**
      * @brief parseFDAT Parses the content to find a fdAT chunk
      * @param rba PNG content

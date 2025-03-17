@@ -25,6 +25,7 @@ public:
     epeNoIHDR,
     epeNoIDAT,
     epeNoIEND,
+    epeNoACTL,
     epeCRC,
     epeChunkName,
     epeInvalidSize

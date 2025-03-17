@@ -192,6 +192,12 @@ void TestLibApng::errorChecking_data()
                              << Info::ParseError::epeCRC;
   QTest::addRow("Invalid size") << ":/data/invalidSize.png" << Info::Type::etPNG << 0U << 1U
                                 << Info::ParseError::epeInvalidSize;
+  QTest::addRow("Valid APNG file") << ":/data/validApng1.png" << Info::Type::etAPNG << 30U << 10U
+                                << Info::ParseError::epeNone;
+  QTest::addRow("Another valid APNG file") << ":/data/validApng2.png" << Info::Type::etAPNG << 20U << 50U
+                                   << Info::ParseError::epeNone;
+  QTest::addRow("APNG file without ACTL") << ":/data/noActlApng.png" << Info::Type::etAPNG << 20U << 50U
+                                           << Info::ParseError::epeNoACTL;
 }
 
 void TestLibApng::errorChecking()

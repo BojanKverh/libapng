@@ -8,5 +8,8 @@
         <file>data/noSignature.png</file>
         <file>data/wrongCrc.png</file>
         <file>data/invalidSize.png</file>
+        <file>data/validApng1.png</file>
+        <file>data/validApng2.png</file>
+        <file>data/noActlApng.png</file>
     </qresource>
 </RCC>

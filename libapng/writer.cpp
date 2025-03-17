@@ -38,7 +38,7 @@ void Writer::append(const QByteArray& rba)
           chunkFrame->m_uiLength += chunk.m_uiLength;
         }
       }
-    } else if (bFirst == true) {
+    } else if ((bFirst == true) && (chunk.m_baName != m_cbaIEND)) {
       m_vOtherChunks << chunk;
     }
 

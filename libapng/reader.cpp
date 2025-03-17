@@ -129,6 +129,7 @@ QByteArray Reader::readContent(const QString& rqsFile)
 void Reader::parseChunks(const QByteArray& rba)
 {
   bool bIEND       = false;
+  bool bACTL       = false;
   quint32 uiOffset = m_cbaSig.size();
   parseIHDR(rba, uiOffset);
   if (m_info.isOk() == false)
@@ -152,6 +153,10 @@ void Reader::parseChunks(const QByteArray& rba)
       m_info.setFPS(num > 0 ? denom / num : 0);
     }
 
+    if (chunk.m_baName == m_cbaACTL) {
+      bACTL = true;
+    }
+
     optChunk = readChunk(rba, uiOffset);
   }
 
@@ -162,6 +167,11 @@ void Reader::parseChunks(const QByteArray& rba)
 
   if (m_baIDAT.size() == 0) {
     m_info.setError(Info::ParseError::epeNoIDAT, "No IDAT chunk found", uiOffset);
+    return;
+  }
+
+  if ((m_info.type() == Info::Type::etAPNG) && (bACTL == false)) {
+    m_info.setError(Info::ParseError::epeNoACTL, "No ACTL chunk found", uiOffset);
     return;
   }
 

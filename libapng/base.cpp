@@ -22,7 +22,7 @@ quint32 Base::convert(const QByteArray& rba) const
     if (rba.size() > 1) {
       uiVal = (uiVal << 8) + (unsigned char) rba[1];
       if (rba.size() > 2) {
-          uiVal = (uiVal << 8) + (unsigned char) rba[2];
+        uiVal = (uiVal << 8) + (unsigned char) rba[2];
         if (rba.size() > 3)
           uiVal = (uiVal << 8) + (unsigned char) rba[3];
       }
@@ -40,22 +40,36 @@ quint32 Base::crc(const Chunk& rChunk) const
 
 std::optional<Chunk> Base::readChunk(const QByteArray& rba, quint32& riOffset)
 {
-  if (riOffset + 12 > rba.size()) {
-    if (riOffset > rba.size())
-      m_info.setError(Info::ParseError::epeInvalidSize, QString("Invalid chunk size at %1").arg(riOffset), riOffset);
+  if (riOffset >= rba.size()) {
+    return {};
+  }
+
+  if (riOffset + 4 > rba.size()) {
+    m_info.setError(Info::ParseError::epeInvalidSize,
+                    QString("Invalid chunk size at %1").arg(riOffset), riOffset);
 
     return {};
   }
 
   Chunk chunk;
   chunk.m_uiLength = convert(rba.mid(riOffset, 4));
-  chunk.m_baName = rba.mid(riOffset + 4, 4);
+
+  if (riOffset + chunk.m_uiLength + 12 > rba.size()) {
+    m_info.setError(Info::ParseError::epeInvalidSize,
+                    QString("Invalid chunk size at %1").arg(riOffset), riOffset);
+
+    return {};
+  }
+
+  chunk.m_baName    = rba.mid(riOffset + 4, 4);
   chunk.m_baContent = rba.mid(riOffset + 8, chunk.m_uiLength);
-  chunk.m_baCRC = rba.mid(riOffset + 8 + chunk.m_uiLength, 4);
+  chunk.m_baCRC     = rba.mid(riOffset + 8 + chunk.m_uiLength, 4);
 
   auto eVal = validity(chunk.m_baName);
   if (eVal == ChunkName::ecnInvalid) {
-    m_info.setError(Info::ParseError::epeChunkName, QString("Invalid chunk name \"%1\" at %2").arg(chunk.m_baName).arg(riOffset), riOffset);
+    m_info.setError(Info::ParseError::epeChunkName,
+                    QString("Invalid chunk name \"%1\" at %2").arg(chunk.m_baName).arg(riOffset),
+                    riOffset);
     return {};
   } else if (eVal == ChunkName::ecnAPNG) {
     m_info.setType(Info::Type::etAPNG);
@@ -63,7 +77,10 @@ std::optional<Chunk> Base::readChunk(const QByteArray& rba, quint32& riOffset)
 
   riOffset += chunk.size();
   if (convert(crc(chunk)) != chunk.m_baCRC) {
-    m_info.setError(Info::ParseError::epeCRC, QString("Invalid CRC value for chunk \"%1\" at %2").arg(chunk.m_baName).arg(riOffset), riOffset);
+    m_info.setError(
+      Info::ParseError::epeCRC,
+      QString("Invalid CRC value for chunk \"%1\" at %2").arg(chunk.m_baName).arg(riOffset),
+      riOffset);
     return {};
   }
 
@@ -72,7 +89,7 @@ std::optional<Chunk> Base::readChunk(const QByteArray& rba, quint32& riOffset)
 
 void Base::writeChunk(QByteArray& rba, const Chunk& rChunk, bool bCalcCRC) const
 {
-  QByteArray baCRC = (bCalcCRC == true? convert(crc(rChunk)) : rChunk.m_baCRC);
+  QByteArray baCRC = (bCalcCRC == true ? convert(crc(rChunk)) : rChunk.m_baCRC);
 
   rba.append(convert(rChunk.m_uiLength));
   rba.append(rChunk.m_baName);
@@ -95,14 +112,14 @@ Chunk Base::actl(quint32 iCount, quint32 iRepeat) const
   chunk.m_baContent.append(convert(iRepeat));
 
   chunk.m_uiLength = chunk.m_baContent.size();
-  chunk.m_baCRC = convert(crc(chunk));
+  chunk.m_baCRC    = convert(crc(chunk));
   return chunk;
 }
 
 Chunk Base::fctl(int i, int iW, int iH, int iFPS, int iX, int iY, int iDispose, int iBlend) const
 {
   Chunk chunk;
-  chunk.m_baName = m_cbaFCTL;
+  chunk.m_baName    = m_cbaFCTL;
   chunk.m_baContent = convert(i >= 0 ? 2 * i + 1 : 0);
   chunk.m_baContent.append(convert(iW));
   chunk.m_baContent.append(convert(iH));
@@ -114,7 +131,7 @@ Chunk Base::fctl(int i, int iW, int iH, int iFPS, int iX, int iY, int iDispose, 
   chunk.m_baContent.append(convert(iBlend).right(1));
 
   chunk.m_uiLength = chunk.m_baContent.size();
-  chunk.m_baCRC = convert(crc(chunk));
+  chunk.m_baCRC    = convert(crc(chunk));
   return chunk;
 }
 
@@ -122,14 +139,17 @@ Chunk Base::iend() const
 {
   Chunk chunk;
   chunk.m_uiLength = 0U;
-  chunk.m_baName = m_cbaIEND;
+  chunk.m_baName   = m_cbaIEND;
 
   chunk.m_uiLength = chunk.m_baContent.size();
-  chunk.m_baCRC = convert(crc(chunk));
+  chunk.m_baCRC    = convert(crc(chunk));
   return chunk;
 }
 
-void Base::reset() { m_info.reset(); }
+void Base::reset()
+{
+  m_info.reset();
+}
 
 ChunkName Base::validity(const QByteArray& rba) const
 {
@@ -138,7 +158,7 @@ ChunkName Base::validity(const QByteArray& rba) const
   else if (m_csetValidApngChunks.contains(rba) == true)
     return ChunkName::ecnAPNG;
   else
-      return ChunkName::ecnInvalid;
+    return ChunkName::ecnInvalid;
 }
 
-}
+} // namespace png

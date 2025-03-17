@@ -1,5 +1,12 @@
 <RCC>
     <qresource prefix="/">
         <file>data/sample.png</file>
+        <file>data/wrongChunkName.png</file>
+        <file>data/noIhdr.png</file>
+        <file>data/noIdat.png</file>
+        <file>data/noIend.png</file>
+        <file>data/noSignature.png</file>
+        <file>data/wrongCrc.png</file>
+        <file>data/invalidSize.png</file>
     </qresource>
 </RCC>

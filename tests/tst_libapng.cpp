@@ -176,8 +176,22 @@ void TestLibApng::errorChecking_data()
   QTest::addColumn<quint32>("frames");
   QTest::addColumn<Info::ParseError>("error");
 
-  QTest::addRow("Valid PNG file") << ":/data/sample.png" << Info::Type::etPNG
-                                  << 0U << 1U << Info::ParseError::epeNone;
+  QTest::addRow("Valid PNG file") << ":/data/sample.png" << Info::Type::etPNG << 0U << 1U
+                                  << Info::ParseError::epeNone;
+  QTest::addRow("No signature") << ":/data/noSignature.png" << Info::Type::etInvalid << 0U << 0U
+                                << Info::ParseError::epeNoSignature;
+  QTest::addRow("Wrong chunk name") << ":/data/wrongChunkName.png" << Info::Type::etPNG << 0U << 0U
+                                    << Info::ParseError::epeChunkName;
+  QTest::addRow("No IHDR chunk") << ":/data/noIhdr.png" << Info::Type::etPNG << 0U << 0U
+                                 << Info::ParseError::epeNoIHDR;
+  QTest::addRow("No IDAT chunk") << ":/data/noIdat.png" << Info::Type::etPNG << 0U << 0U
+                                 << Info::ParseError::epeNoIDAT;
+  QTest::addRow("No IEND chunk") << ":/data/noIend.png" << Info::Type::etPNG << 0U << 1U
+                                 << Info::ParseError::epeNoIEND;
+  QTest::addRow("Wrong CRC") << ":/data/wrongCrc.png" << Info::Type::etPNG << 0U << 0U
+                             << Info::ParseError::epeCRC;
+  QTest::addRow("Invalid size") << ":/data/invalidSize.png" << Info::Type::etPNG << 0U << 1U
+                                << Info::ParseError::epeInvalidSize;
 }
 
 void TestLibApng::errorChecking()

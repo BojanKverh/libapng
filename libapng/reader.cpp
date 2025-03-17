@@ -119,7 +119,8 @@ QByteArray Reader::readContent(const QString& rqsFile)
   // if the signature is not found, clear the content, which signals an error
   if (ba.left(8) != m_cbaSig) {
     m_info.setType(Info::Type::etInvalid);
-    m_info.setError(Info::ParseError::epeNoSignature, "No PNG signature found at the beginning of the file", 0U);
+    m_info.setError(Info::ParseError::epeNoSignature,
+                    "No PNG signature found at the beginning of the file", 0U);
   }
 
   return ba;
@@ -127,14 +128,14 @@ QByteArray Reader::readContent(const QString& rqsFile)
 
 void Reader::parseChunks(const QByteArray& rba)
 {
-  bool bIEND = false;
+  bool bIEND       = false;
   quint32 uiOffset = m_cbaSig.size();
   parseIHDR(rba, uiOffset);
   if (m_info.isOk() == false)
     return;
 
   auto optChunk = readChunk(rba, uiOffset);
-  while ((optChunk.has_value() == true) && (m_info.isOk() == true)) {
+  while (optChunk.has_value() == true) {
     auto chunk = optChunk.value();
     if (chunk.m_baName == m_cbaIDAT)
       m_baIDAT.append(chunk.m_baContent);
@@ -146,13 +147,15 @@ void Reader::parseChunks(const QByteArray& rba)
       m_vOtherChunks << chunk;
 
     if (chunk.m_baName == m_cbaFCTL) {
-        auto num = convert(chunk.m_baContent.mid(20, 2));
-        auto denom = convert(chunk.m_baContent.mid(22, 2));
-        m_info.setFPS(num > 0? denom / num : 0);
+      auto num   = convert(chunk.m_baContent.mid(20, 2));
+      auto denom = convert(chunk.m_baContent.mid(22, 2));
+      m_info.setFPS(num > 0 ? denom / num : 0);
     }
 
     optChunk = readChunk(rba, uiOffset);
   }
+
+  m_info.setFrameCount((m_baIDAT.size() > 0 ? 1 : 0) + m_vfDAT.count());
 
   if (m_info.isOk() == false)
     return;
@@ -165,8 +168,6 @@ void Reader::parseChunks(const QByteArray& rba)
   if (bIEND == false) {
     m_info.setError(Info::ParseError::epeNoIEND, "No IEND chunk found ", uiOffset);
   }
-
-  m_info.setFrameCount(1 + m_vfDAT.count());
 }
 
 void Reader::parseIHDR(const QByteArray& rba, quint32& riOffset)
@@ -178,20 +179,6 @@ void Reader::parseIHDR(const QByteArray& rba, quint32& riOffset)
   if (m_chunkIHDR.m_baName != m_cbaIHDR) {
     m_info.setError(Info::ParseError::epeNoIHDR, "No IHDR chunk found", riOffset);
   }
-}
-
-QPair<QByteArray, int> Reader::parseFDAT(const QByteArray& rba, int iOffset) const
-{
-  QPair<QByteArray, int> result;
-  result.second = -1;
-
-  auto ind = rba.indexOf(m_cbaFDAT, iOffset);
-  if (ind >= 0) {
-    auto uiLength = convert(rba.mid(ind - 4, 4));
-    result.first  = rba.mid(ind + 8, uiLength - 4);
-    result.second = ind + uiLength + 4;
-  }
-  return result;
 }
 
 QVector<QByteArray> Reader::split(const QByteArray& rba) const
